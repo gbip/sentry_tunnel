@@ -2,7 +2,7 @@ use futures_util::future::{self, FutureExt};
 use gotham::hyper::{body, Body, HeaderMap, Method, Response, StatusCode, Uri, Version};
 use std::pin::Pin;
 
-use gotham::handler::{HandlerError, HandlerFuture};
+use gotham::handler::{HandlerError, HandlerFuture, HandlerResult, IntoResponse};
 use gotham::helpers::http::response::create_empty_response;
 use gotham::router::builder::{build_simple_router, DefineSingleRoute, DrawRoutes};
 use gotham::router::Router;
@@ -82,27 +82,27 @@ fn parse_body(body: String) -> Result<RemoteSentryInstance, HandlerError> {
 }
 
 /// Extracts the elements of the POST request and prints them
-fn post_tunnel_handler(mut state: State) -> Pin<Box<HandlerFuture>> {
-    let f = body::to_bytes(Body::take_from(&mut state)).then(|full_body| match full_body {
+async fn post_tunnel_handler(mut state: State) -> HandlerResult {
+    // Check content length
+    let full_body = body::to_bytes(Body::take_from(&mut state)).await;
+    match full_body {
         Ok(valid_body) => {
             let body_content = String::from_utf8(valid_body.to_vec()).unwrap();
             match parse_body(body_content) {
                 Ok(sentry_instance) => {
-                    sentry_instance.forward("toto");
+                    sentry_instance.forward("toto").await;
                     let res = create_empty_response(&state, StatusCode::OK);
-                    future::ok((state, res))
+                    Ok((state, res))
                 }
-                Err(e) => future::err((state, e)),
+                Err(e) => Err((state, e)),
             }
         }
-        Err(e) => future::err((state, e.into())),
-    });
-
-    Box::pin(f.boxed())
+        Err(e) => Err((state, e.into())),
+    }
 }
 fn router(path: &str) -> Router {
     build_simple_router(|route| {
-        route.post(path).to(post_tunnel_handler);
+        route.post(path).to_async(post_tunnel_handler);
     })
 }
 
