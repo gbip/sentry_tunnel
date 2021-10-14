@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Sentry Test Page</title>
+    <script
+            src="https://browser.sentry-cdn.com/6.13.3/bundle.min.js"
+            integrity="sha384-sGMbmxgVprpEFMz6afNDyADd4Kav86v5Tvo2Y6w5t8tHUn1P1at3lCjN7IQo2c7E"
+            crossorigin="anonymous"
+    ></script>
+</head>
+<body>
+
+    <p>This is a test page.</p>
+
+</body>
+
+<script>
+
+    Sentry.init({
+        dsn: "https://public@sentry.example.com/1",
+        tunnel: "/tunnel",
+        release: "test_project@" + "1.0",
+
+        // We recommend adjusting this value in production, or using tracesSampler
+        // for finer control
+        tracesSampleRate: 1.0,
+    });
+
+</script>
