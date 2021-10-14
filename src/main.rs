@@ -1,5 +1,5 @@
 use futures_util::future::{self, FutureExt};
-use gotham::hyper::{body, Body, HeaderMap, Method, Response, StatusCode, Uri, Version};
+use gotham::hyper::{body, Body, HeaderMap, Method, Response, StatusCode, Uri, Version, header};
 use std::pin::Pin;
 
 use gotham::handler::{HandlerError, HandlerFuture, HandlerResult, IntoResponse};
@@ -81,9 +81,20 @@ fn parse_body(body: String) -> Result<RemoteSentryInstance, HandlerError> {
     RemoteSentryInstance::try_new_from_body(body)
 }
 
+
+fn check_content_length(headers : &HeaderMap) -> Result<(), ()> {
+    /*
+    if let Some(content_length_value) = headers.get(header::CONTENT_LENGTH) {
+        let  content_length = u16::from_be_bytes(content_length_value.as_bytes())?;
+        Ok(content_length < 100000)
+    }
+    Err(())
+    */
+}
+     */
 /// Extracts the elements of the POST request and prints them
 async fn post_tunnel_handler(mut state: State) -> HandlerResult {
-    // Check content length
+    let header = HeaderMap::take_from(&mut state);
     let full_body = body::to_bytes(Body::take_from(&mut state)).await;
     match full_body {
         Ok(valid_body) => {
