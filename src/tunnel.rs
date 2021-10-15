@@ -18,7 +18,6 @@ pub struct RemoteSentryInstance {
     raw_body: String,
 }
 
-#[non_exhaustive]
 #[derive(Debug)]
 enum BodyError {
     MalformedBody,
@@ -32,7 +31,6 @@ impl Display for BodyError {
             BodyError::MalformedBody => f.write_str("Malformed HTTP Body"),
             BodyError::MissingDsnKeyInHeader => f.write_str("dsn key was not found in header"),
             BodyError::InvalidHeaderJson(e) => f.write_fmt(format_args!("{}", e)),
-            _ => f.write_str("Invalid body"),
         }
     }
 }
@@ -68,7 +66,7 @@ impl RemoteSentryInstance {
             let header = body
                 .lines()
                 .next()
-                .ok_or(make_error(BodyError::MalformedBody))?;
+                .ok_or_else(|| make_error(BodyError::MalformedBody))?;
             let header: Value = serde_json::from_str(header).map_err(|e| {
                 make_error(BodyError::InvalidHeaderJson(e)).with_status(StatusCode::BAD_REQUEST)
             })?;
@@ -76,7 +74,7 @@ impl RemoteSentryInstance {
                 if let Some(dsn_str) = dsn.as_str() {
                     let (_url, project_id) = dsn_str
                         .rsplit_once('/')
-                        .ok_or(make_error(BodyError::MalformedBody))?;
+                        .ok_or_else(|| make_error(BodyError::MalformedBody))?;
                     Ok(RemoteSentryInstance {
                         project_id: project_id.to_string(),
                         raw_body: body,

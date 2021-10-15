@@ -34,13 +34,13 @@ impl Config {
         let mut options = ListOptions::new();
         options.separator = Some(",".to_string());
         let remote_host : String = envmnt::get_parse("TUNNEL_REMOTE_HOST").map_err(|_| "Missing sentry remote. Please the environnement variable 'TUNNEL_REMOTE_HOST' to specify the sentry remote.".to_string())?;
-        let project_ids = envmnt::get_list_with_options("TUNNEL_PROJECT_IDS", &options).ok_or(
+        let project_ids = envmnt::get_list_with_options("TUNNEL_PROJECT_IDS", &options).ok_or_else( || 
             "Project ID unspecified. Use 'export TUNNEL_PROJECT_IDS' to provide valid ids."
                 .to_string(),
         )?;
         let port = envmnt::get_u16("TUNNEL_LISTEN_PORT", 7878);
-        let tunnel_path: String = envmnt::get_parse("TUNNEL_PATH").unwrap_or("/tunnel".to_string());
-        let ip: String = envmnt::get_parse("TUNNEL_IP").unwrap_or("127.0.0.1".to_string());
+        let tunnel_path: String = envmnt::get_parse("TUNNEL_PATH").unwrap_or_else(|_| "/tunnel".to_string());
+        let ip: String = envmnt::get_parse("TUNNEL_IP").unwrap_or_else(|_| "127.0.0.1".to_string());
         Ok(Config {
             remote_host,
             project_ids,

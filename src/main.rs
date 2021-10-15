@@ -37,7 +37,6 @@ fn parse_body(body: String) -> Result<RemoteSentryInstance, HandlerError> {
 }
 
 #[derive(Debug)]
-#[non_exhaustive]
 enum HeaderError {
     MissingContentLength,
     ContentIsTooBig,
@@ -50,8 +49,8 @@ impl Display for HeaderError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             HeaderError::MissingContentLength => f.write_str("Missing content length header"),
-            HeaderError::ContentIsTooBig => f.write_str("Content length is too big"),
-            _ => f.write_str("Invalid header"),
+            HeaderError::ContentIsTooBig => f.write_str("Content length too big"),
+            HeaderError::CouldNotParseContentLength => f.write_str("could not parse content length header"),
         }
     }
 }
