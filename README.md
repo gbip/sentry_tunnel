@@ -16,3 +16,5 @@ This proxy looks for the following environnement variables :
 An example docker-compose file is provided.
 
 ## License
+
+BSD-2
