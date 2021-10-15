@@ -14,8 +14,8 @@ pub struct RemoteSentryInstance {
     raw_body: String,
 }
 
-#[derive(Debug)]
 #[non_exhaustive]
+#[derive(Debug)]
 enum BodyError {
     MalformedBody,
     InvalidHeaderJson(serde_json::Error),

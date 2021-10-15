@@ -70,7 +70,9 @@ async fn post_tunnel_handler(mut state: State) -> HandlerResult {
             match check_content_length(&headers) {
                 Ok(_) => match parse_body(body_content) {
                     Ok(sentry_instance) => {
-                        sentry_instance.forward("toto").await;
+                        if let Err(e) = sentry_instance.forward("toto").await {
+                            error!("{} - Host = {}", e, "toto");
+                        }
                         let res = create_empty_response(&state, StatusCode::OK);
                         Ok((state, res))
                     }
