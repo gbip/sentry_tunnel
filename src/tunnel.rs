@@ -1,13 +1,10 @@
-use futures_util::future::{self, FutureExt};
-use gotham::hyper::{body, header, Body, HeaderMap, Method, Response, StatusCode, Uri, Version};
-use std::pin::Pin;
+use gotham::handler::HandlerError;
+use gotham::hyper::StatusCode;
 
-use gotham::handler::{HandlerError, HandlerFuture, HandlerResult, IntoResponse};
-use gotham::helpers::http::response::create_empty_response;
-use gotham::router::builder::{build_simple_router, DefineSingleRoute, DrawRoutes};
-use gotham::router::Router;
-use gotham::state::{FromState, State};
+use anyhow::Error as AError;
+
 use serde_json::Value;
+
 use std::error::Error;
 use std::fmt::{Debug, Display, Formatter};
 
@@ -18,6 +15,7 @@ pub struct RemoteSentryInstance {
 }
 
 #[derive(Debug)]
+#[non_exhaustive]
 enum BodyError {
     MalformedBody,
     InvalidHeaderJson(serde_json::Error),
@@ -37,8 +35,11 @@ impl Display for BodyError {
 
 impl Error for BodyError {}
 
-fn make_error(err: BodyError) -> HandlerError {
-    HandlerError::from(err).with_status(StatusCode::BAD_REQUEST)
+pub fn make_error<T>(err: T) -> HandlerError
+where
+    T: Into<AError>,
+{
+    HandlerError::from(err.into()).with_status(StatusCode::BAD_REQUEST)
 }
 
 impl RemoteSentryInstance {
