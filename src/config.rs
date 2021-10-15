@@ -49,4 +49,8 @@ impl Config {
             ip,
         })
     }
+
+    pub fn project_id_is_allowed(&self, id : &String) -> bool {
+        self.project_ids.contains(id) 
+    }
 }

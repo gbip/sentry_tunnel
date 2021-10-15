@@ -14,15 +14,16 @@ use std::fmt::{Debug, Display, Formatter};
 
 #[derive(Debug)]
 pub struct RemoteSentryInstance {
-    project_id: String,
-    raw_body: String,
+    pub project_id: String,
+    pub raw_body: String,
 }
 
 #[derive(Debug)]
-enum BodyError {
+pub enum BodyError {
     MalformedBody,
     InvalidHeaderJson(serde_json::Error),
     MissingDsnKeyInHeader,
+    InvalidProjectId,
 }
 
 impl Display for BodyError {
@@ -31,6 +32,7 @@ impl Display for BodyError {
             BodyError::MalformedBody => f.write_str("Malformed HTTP Body"),
             BodyError::MissingDsnKeyInHeader => f.write_str("dsn key was not found in header"),
             BodyError::InvalidHeaderJson(e) => f.write_fmt(format_args!("{}", e)),
+            BodyError::InvalidProjectId => f.write_str("Unauthorized project ID"),
         }
     }
 }
@@ -60,7 +62,7 @@ impl RemoteSentryInstance {
         request.send_async().await?;
         Ok(())
     }
-
+    
     pub fn try_new_from_body(body: String) -> Result<RemoteSentryInstance, HandlerError> {
         if body.lines().count() == 3 {
             let header = body

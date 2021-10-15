@@ -22,7 +22,7 @@ mod config;
 mod tunnel;
 
 use config::Config;
-use tunnel::{make_error, RemoteSentryInstance};
+use tunnel::{make_error, RemoteSentryInstance, BodyError};
 
 // 1 MB max body
 const MAX_CONTENT_SIZE: u16 = 1_000;
@@ -84,11 +84,15 @@ async fn post_tunnel_handler(mut state: State) -> HandlerResult {
                     Ok(sentry_instance) => {
                         let config = TunnelConfig::borrow_from(&state);
                         let host = &config.inner.remote_host;
+                        if config.inner.project_id_is_allowed(&sentry_instance.project_id) {
                         if let Err(e) = sentry_instance.forward(host).await {
                             error!("{} - Host = {}", e, host);
                         }
                         let res = create_empty_response(&state, StatusCode::OK);
                         Ok((state, res))
+                        } else {
+                            Err((state, make_error(BodyError::InvalidProjectId)))
+                        }
                     }
                     Err(e) => Err((state, e)),
                 },

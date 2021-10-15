@@ -3,6 +3,10 @@
 This is a proxy that forwards tunneled sentry requests to the real sentry server.
 The implementation is based on the explanation provided by [the official sentry documentation](https://docs.sentry.io/platforms/javascript/troubleshooting/#using-the-tunnel-option).
 
+> A tunnel is an HTTP endpoint that acts as a proxy between Sentry and your application. Because you control this server, there is no risk of any requests sent to it being blocked. When the endpoint lives under the same origin (although it does not have to in order for the tunnel to work), the browser will not treat any requests to the endpoint as a third-party request. As a result, these requests will have different security measures applied which, by default, don't trigger ad-blockers.
+
+[From the sentry documentation](https://docs.sentry.io/platforms/javascript/troubleshooting/#using-the-tunnel-option)
+
 This proxy looks for the following environnement variables : 
 
 * `TUNNEL_REMOTE_HOST` : The url where to forward the tunneled requests. Example : `TUNNEL_REMOTE_HOST=https://sentry.example.com`.
@@ -13,7 +17,11 @@ This proxy looks for the following environnement variables :
 
 ## Running with docker
 
-An example docker-compose file is provided.
+An example docker-compose file is provided. Otherwise : 
+
+```
+docker run -e 'TUNNEL_REMOTE_HOST="https://sentry.example.com"' -e 'TUNNEL_PROJECT_IDS=1,5' sentry_tunnel
+```
 
 ## License
 
