@@ -48,10 +48,17 @@ where
 
 impl RemoteSentryInstance {
     pub async fn forward(self, host: &str) -> Result<(), AError> {
-        let request = Request::builder().uri(host).header("Content-type", "application/x-sentry-envelope")
+        let request = Request::builder()
+            .uri(host)
+            .header("Content-type", "application/x-sentry-envelope")
             .method("POST")
             .body(self.raw_body)?;
-        info!("{} {} - body={}", request.method(), request.uri(), request.body());
+        info!(
+            "{} {} - body={}",
+            request.method(),
+            request.uri(),
+            request.body()
+        );
         request.send_async().await?;
         Ok(())
     }

@@ -1,11 +1,13 @@
 use gotham::handler::{HandlerError, HandlerResult};
 use gotham::helpers::http::response::create_empty_response;
 use gotham::hyper::{body, header, Body, HeaderMap, StatusCode};
-use gotham::router::{Router, builder::build_router, builder::DrawRoutes, builder::DefineSingleRoute};
-use gotham::state::{FromState, State};
 use gotham::middleware::state::StateMiddleware;
 use gotham::pipeline::single::single_pipeline;
 use gotham::pipeline::single_middleware;
+use gotham::router::{
+    builder::build_router, builder::DefineSingleRoute, builder::DrawRoutes, Router,
+};
+use gotham::state::{FromState, State};
 
 use gotham_derive::StateData;
 
@@ -19,15 +21,15 @@ use log::*;
 mod config;
 mod tunnel;
 
-use tunnel::{make_error, RemoteSentryInstance};
 use config::Config;
+use tunnel::{make_error, RemoteSentryInstance};
 
 // 1 MB max body
 const MAX_CONTENT_SIZE: u16 = 1_000;
 
 #[derive(Debug, StateData, Clone)]
 struct TunnelConfig {
-    inner : Arc<Config>,
+    inner: Arc<Config>,
 }
 
 fn parse_body(body: String) -> Result<RemoteSentryInstance, HandlerError> {
@@ -97,25 +99,28 @@ async fn post_tunnel_handler(mut state: State) -> HandlerResult {
         Err(e) => Err((state, e.into())),
     }
 }
-fn router(path: &str, config : Config) -> Router {
-    let middleware = StateMiddleware::new(TunnelConfig { inner : Arc::new(config
-                                                                           )});
+fn router(path: &str, config: Config) -> Router {
+    let middleware = StateMiddleware::new(TunnelConfig {
+        inner: Arc::new(config),
+    });
     let pipeline = single_middleware(middleware);
     let (chain, pipelines) = single_pipeline(pipeline);
-
 
     build_router(chain, pipelines, |route| {
         route.post(path).to_async(post_tunnel_handler);
     })
-
 }
 
 fn main() {
-    stderrlog::new().verbosity(2).module(module_path!()).init().unwrap(); // Error, Warn and Info
+    stderrlog::new()
+        .verbosity(2)
+        .module(module_path!())
+        .init()
+        .unwrap(); // Error, Warn and Info
     match config::Config::new_from_env_variables() {
         Ok(config) => {
             info!("{}", config);
-            let addr = format!("{}:{}",config.ip, config.port);
+            let addr = format!("{}:{}", config.ip, config.port);
             gotham::start(addr, router(&config.tunnel_path.clone(), config));
         }
         Err(e) => {
