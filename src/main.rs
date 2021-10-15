@@ -9,6 +9,9 @@ use std::error::Error;
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 
+use log::*;
+
+mod config;
 mod tunnel;
 
 use tunnel::{make_error, RemoteSentryInstance};
@@ -86,8 +89,16 @@ fn router(path: &str) -> Router {
 }
 
 fn main() {
-    let addr = "127.0.0.1:7878";
-    let tunnel_uri = "/tunnel";
-    println!("Listening for requests at http://{}", addr);
-    gotham::start(addr, router(tunnel_uri));
+    stderrlog::new().verbosity(2).module(module_path!()).init().unwrap(); // Error, Warn and Info
+    match config::Config::new_from_env_variables() {
+        Ok(config) => {
+            info!("{}", config);
+            let addr = format!("127.0.0.1:{}", config.port);
+            gotham::start(addr, router(&config.tunnel_path));
+        }
+        Err(e) => {
+            error!("{}", e);
+            std::process::exit(1)
+        }
+    }
 }

@@ -43,9 +43,10 @@ where
 }
 
 impl RemoteSentryInstance {
-    pub async fn forward(self, host: &str) {
+    pub async fn forward(self, host: &str) -> Result<(), AError> {
         println!("Forwarding {} to {}", self.raw_body, host);
-        let _reponse = isahc::post_async(host, self.raw_body);
+        isahc::post_async(host, self.raw_body).await?;
+        Ok(())
     }
 
     pub fn try_new_from_body(body: String) -> Result<RemoteSentryInstance, HandlerError> {
