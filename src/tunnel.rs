@@ -51,7 +51,7 @@ impl RemoteSentryInstance {
         let request = Request::builder().uri(host).header("Content-type", "application/x-sentry-envelope")
             .method("POST")
             .body(self.raw_body)?;
-        info!("{} {} - body={}", request.method(), request.uri(), request.headers(), request.body());
+        info!("{} {} - body={}", request.method(), request.uri(), request.body());
         request.send_async().await?;
         Ok(())
     }
