@@ -12,7 +12,7 @@ pub struct Config {
 
 impl Display for Config {
     fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
-        f.write_fmt(format_args!("Listening on port {}/{}\nForwarding requests to {}.\nValid project ids : {:?}", self.port, self.tunnel_path, self.remote_host, self.project_ids))
+        f.write_fmt(format_args!("Listening on port {}{}\nForwarding requests to {}.\nValid project ids : {:?}", self.port, self.tunnel_path, self.remote_host, self.project_ids))
     }
 }
 

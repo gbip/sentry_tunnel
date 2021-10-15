@@ -7,6 +7,7 @@ edition = "2018"
 
 [dependencies]
 gotham = "0.6.0"
+gotham_derive = "0.6.0"
 futures-util = "0.3.14"
 serde = "1.0"
 serde_json = "1.0"
