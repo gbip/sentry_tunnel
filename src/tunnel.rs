@@ -3,7 +3,11 @@ use gotham::hyper::StatusCode;
 
 use anyhow::Error as AError;
 
+use isahc::{Request, RequestExt};
+
 use serde_json::Value;
+
+use log::*;
 
 use std::error::Error;
 use std::fmt::{Debug, Display, Formatter};
@@ -44,8 +48,11 @@ where
 
 impl RemoteSentryInstance {
     pub async fn forward(self, host: &str) -> Result<(), AError> {
-        println!("Forwarding {} to {}", self.raw_body, host);
-        isahc::post_async(host, self.raw_body).await?;
+        let request = Request::builder().uri(host).header("Content-type", "application/x-sentry-envelope")
+            .method("POST")
+            .body(self.raw_body)?;
+        info!("{} {} - body={}", request.method(), request.uri(), request.headers(), request.body());
+        request.send_async().await?;
         Ok(())
     }
 
