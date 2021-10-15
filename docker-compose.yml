@@ -1,0 +1,11 @@
+version: "3"
+services:
+  sentry_tunnel:
+    build: .
+    image: sentry_tunnel
+    ports:
+      - "127.0.0.1:7878:7878"
+    environment : 
+      - TUNNEL_REMOTE_HOST=https://sentry.example.com
+      - TUNNEL_PROJECT_IDS=1,5,67
+      - TUNNEL_IP=0.0.0.0

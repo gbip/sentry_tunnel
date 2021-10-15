@@ -115,7 +115,7 @@ fn main() {
     match config::Config::new_from_env_variables() {
         Ok(config) => {
             info!("{}", config);
-            let addr = format!("127.0.0.1:{}", config.port);
+            let addr = format!("{}:{}",config.ip, config.port);
             gotham::start(addr, router(&config.tunnel_path.clone(), config));
         }
         Err(e) => {

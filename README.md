@@ -9,9 +9,10 @@ This proxy looks for the following environnement variables :
 * `TUNNEL_PROJECT_IDS` : A comma separated list of valid project ids. Request that are not from those projects will be rejected. Example : `TUNNEL_PROJECT_IDS=456,78,10840`.
 * `TUNNEL_LISTEN_PORT` : The port that this application will bind to. Example : `TUNNEL_LISTEN_PORT=7878`. This is optional, the default value is 7878.
 * `TUNNEL_PATH` : The url path where the tunnel will be waiting for tunneled request. Example : `TUNNEL_PATH=/tunnel`. This is optional, the default value is '/tunnel'.
+* `TUNNEL_IP` : The ip that this application will listen on. Optional, the default value is `127.0.0.1`.
 
+## Running with docker
 
-
-## Using in a docker stack
+An example docker-compose file is provided.
 
 ## License
