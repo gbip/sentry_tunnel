@@ -1,11 +1,11 @@
 #[cfg(test)]
 mod tests {
-    use gotham::test::TestServer;
     use gotham::hyper::http::{header, HeaderValue, StatusCode};
+    use gotham::test::TestServer;
 
     use mime::Mime;
     use sentry_tunnel::config::Config;
-    use sentry_tunnel::server::router;
+    use sentry_tunnel::server::{router, HeaderError, MAX_CONTENT_SIZE};
     use sentry_tunnel::tunnel::BodyError;
 
     #[test]
@@ -79,10 +79,10 @@ mod tests {
         let body = response.read_body().unwrap();
         let expc = format!("{}", BodyError::InvalidProjectId);
 
-        assert_eq!(&body[..], expc.as_bytes());
+        assert_eq!(String::from_utf8(body).unwrap(), expc);
     }
 
-        #[test]
+    #[test]
     fn test_missing_dsn() {
         let test_config = Config {
             remote_host: "https://sentry.example.com/".to_string(),
@@ -118,6 +118,42 @@ mod tests {
         let body = response.read_body().unwrap();
         let expc = format!("{}", BodyError::MissingDsnKeyInHeader);
 
-        assert_eq!(&body[..], expc.as_bytes());
+        assert_eq!(String::from_utf8(body).unwrap(), expc);
+    }
+
+    #[test]
+    fn test_too_big_content_length() {
+        let test_config = Config {
+            remote_host: "https://sentry.example.com/".to_string(),
+            project_ids: vec!["5".to_string()],
+            port: 7878,
+            tunnel_path: "/tunnel".to_string(),
+            ip: "0.0.0.0".to_string(),
+        };
+        let test_server = TestServer::new(router(
+            &test_config.tunnel_path.clone(),
+            test_config.clone(),
+        ))
+        .unwrap();
+        let mut data = vec![];
+        for _ in 0..MAX_CONTENT_SIZE + 1 {
+            data.push(0);
+        }
+        let mime = "application/json".parse::<Mime>().unwrap();
+        let response = test_server
+            .client()
+            .post(
+                "http://localhost".to_owned() + &test_config.tunnel_path,
+                data,
+                mime,
+            )
+            .perform()
+            .unwrap();
+
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+        let body = response.read_body().unwrap();
+        let expc = format!("{}", HeaderError::ContentIsTooBig);
+
+        assert_eq!(String::from_utf8(body).unwrap(), expc);
     }
 }

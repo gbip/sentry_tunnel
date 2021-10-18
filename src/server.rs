@@ -26,7 +26,7 @@ use crate::config::Config;
 use crate::tunnel::{BodyError, RemoteSentryInstance};
 
 // 1 MB max body
-const MAX_CONTENT_SIZE: u16 = 1_000;
+pub const MAX_CONTENT_SIZE: u16 = 1_000;
 
 #[derive(Debug, StateData, Clone)]
 struct TunnelConfig {
@@ -38,7 +38,7 @@ fn parse_body(body: String) -> Result<RemoteSentryInstance, BodyError> {
 }
 
 #[derive(Debug)]
-enum HeaderError {
+pub enum HeaderError {
     MissingContentLength,
     ContentIsTooBig,
     CouldNotParseContentLength,
@@ -86,41 +86,44 @@ fn check_content_length(headers: &HeaderMap) -> Result<(), HeaderError> {
 /// Extracts the elements of the POST request and prints them
 async fn post_tunnel_handler(mut state: State) -> HandlerResult {
     let headers = HeaderMap::take_from(&mut state);
-    let full_body = body::to_bytes(Body::take_from(&mut state)).await;
-    match full_body {
-        Ok(valid_body) => {
-            let body_content = String::from_utf8(valid_body.to_vec()).unwrap();
-            match check_content_length(&headers) {
-                Ok(_) => match parse_body(body_content) {
-                    Ok(sentry_instance) => {
-                        let config = TunnelConfig::borrow_from(&state);
-                        let host = &config.inner.remote_host;
-                        if config
-                            .inner
-                            .project_id_is_allowed(&sentry_instance.project_id)
-                        {
-                            if let Err(e) = sentry_instance.forward(host).await {
-                                error!("{} - Host = {}", e, host);
+
+    match check_content_length(&headers) {
+        Ok(_) => {
+            let full_body = body::to_bytes(Body::take_from(&mut state)).await;
+            match full_body {
+                Ok(valid_body) => {
+                    let body_content = String::from_utf8(valid_body.to_vec()).unwrap();
+                    match parse_body(body_content) {
+                        Ok(sentry_instance) => {
+                            let config = TunnelConfig::borrow_from(&state);
+                            let host = &config.inner.remote_host;
+                            if config
+                                .inner
+                                .project_id_is_allowed(&sentry_instance.project_id)
+                            {
+                                if let Err(e) = sentry_instance.forward(host).await {
+                                    error!("{} - Host = {}", e, host);
+                                }
+                                let res = create_empty_response(&state, StatusCode::OK);
+                                Ok((state, res))
+                            } else {
+                                let res = BodyError::InvalidProjectId.into_response(&state);
+                                Ok((state, res))
                             }
-                            let res = create_empty_response(&state, StatusCode::OK);
-                            Ok((state, res))
-                        } else {
-                            let res = BodyError::InvalidProjectId.into_response(&state);
+                        }
+                        Err(e) => {
+                            let res = e.into_response(&state);
                             Ok((state, res))
                         }
                     }
-                    Err(e) => {
-                        let res = e.into_response(&state);
-                        Ok((state, res))
-                    }
-                },
-                Err(e) => {
-                    let res = e.into_response(&state);
-                    Ok((state, res))
                 }
+                Err(e) => Err((state, e.into())),
             }
         }
-        Err(e) => Err((state, e.into())),
+        Err(e) => {
+            let res = e.into_response(&state);
+            Ok((state, res))
+        }
     }
 }
 
