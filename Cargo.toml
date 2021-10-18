@@ -9,6 +9,9 @@ edition = "2018"
 name="sentry_tunnel"
 path="src/main.rs"
 
+[lib]
+name="sentry_tunnel"
+
 [dependencies]
 gotham = "0.6.0"
 gotham_derive = "0.6.0"
@@ -20,3 +23,8 @@ anyhow = "1.0"
 envmnt = "0.9"
 log = "0.4"
 stderrlog = "0.5"
+mime = "0.3"
+
+
+[dev-dependencies]
+hyper = "0.14"

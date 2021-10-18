@@ -23,6 +23,7 @@ RUN adduser \
 # Create an empty application to cache dependency build
 RUN cargo new /sentry_tunnel --bin 
 WORKDIR /sentry_tunnel
+RUN touch src/lib.rs
 COPY ./Cargo.lock ./Cargo.lock
 COPY ./Cargo.toml ./Cargo.toml
 RUN cargo build --target x86_64-unknown-linux-musl --release
@@ -31,7 +32,9 @@ RUN cargo build --target x86_64-unknown-linux-musl --release
 RUN rm src/*.rs
 COPY ./src ./src
 RUN touch src/main.rs
+RUN touch src/lib.rs
 RUN rm -f ./target/release/deps/sentry_tunnel*
+RUN rm -f ./target/release/deps/libsentry_tunnel*
 RUN cargo build --target x86_64-unknown-linux-musl --release
 
 
