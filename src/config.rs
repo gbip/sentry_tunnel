@@ -33,7 +33,7 @@ impl Config {
     pub fn new_from_env_variables() -> Result<Config, String> {
         let mut options = ListOptions::new();
         options.separator = Some(",".to_string());
-        let remote_host : String = envmnt::get_parse("TUNNEL_REMOTE_HOST").map_err(|_| "Missing sentry remote. Please the environnement variable 'TUNNEL_REMOTE_HOST' to specify the sentry remote.".to_string())?;
+        let remote_host : String = envmnt::get_parse("TUNNEL_REMOTE_HOST").map_err(|_| "Missing sentry remote. Please set the environnement variable 'TUNNEL_REMOTE_HOST' to specify the sentry remote.".to_string())?;
         let project_ids = envmnt::get_list_with_options("TUNNEL_PROJECT_IDS", &options)
             .ok_or_else(|| {
                 "Project ID unspecified. Use 'export TUNNEL_PROJECT_IDS' to provide valid ids."
