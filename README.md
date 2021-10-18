@@ -7,6 +7,8 @@ The implementation is based on the explanation provided by [the official sentry 
 
 [From the sentry documentation](https://docs.sentry.io/platforms/javascript/troubleshooting/#using-the-tunnel-option)
 
+## Configuration
+
 This proxy looks for the following environnement variables : 
 
 * `TUNNEL_REMOTE_HOST` : The url where to forward the tunneled requests. Example : `TUNNEL_REMOTE_HOST=https://sentry.example.com`.
