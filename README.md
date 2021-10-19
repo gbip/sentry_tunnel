@@ -1,3 +1,7 @@
+[![tests](https://github.com/gbip/sentry_tunnel/actions/workflows/build_test.yml/badge.svg)](https://github.com/gbip/sentry_tunnel/actions/workflows/build_test.yml)
+![Image Size](https://img.shields.io/docker/image-size/sigalen/sentry_tunnel)
+![Docker Pulls](https://img.shields.io/docker/pulls/sigalen/sentry_tunnel)
+
 # Sentry Tunnel
 
 This is a proxy that forwards tunneled sentry requests to the real sentry server.
