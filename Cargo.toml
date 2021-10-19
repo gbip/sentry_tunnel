@@ -27,4 +27,4 @@ mime = "0.3"
 
 
 [dev-dependencies]
-hyper = "0.14"
+httpmock = "0.6"

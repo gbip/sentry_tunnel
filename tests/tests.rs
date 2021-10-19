@@ -7,11 +7,19 @@ mod tests {
     use sentry_tunnel::config::Config;
     use sentry_tunnel::server::{router};
     use sentry_tunnel::tunnel::BodyError;
+    use httpmock::prelude::*;
+
 
     #[test]
     fn test_correct_behaviour() {
+        let server = MockServer::start();
+        let sentry_mock = server.mock(|when, then| {
+                when.method(POST)
+                    .path("/api/5/envelope/");
+                then.status(200);
+            });
         let test_config = Config {
-            remote_host: "https://sentry.example.com/".to_string(),
+            remote_host: server.url(""),
             project_ids: vec!["5".to_string()],
             port: 7878,
             tunnel_path: "/tunnel".to_string(),
@@ -40,7 +48,9 @@ mod tests {
             .perform()
             .unwrap();
 
+        sentry_mock.assert();
         assert_eq!(response.status(), StatusCode::OK);
+
     }
 
     #[test]
