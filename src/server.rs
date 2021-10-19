@@ -25,8 +25,8 @@ use log::*;
 use crate::config::Config;
 use crate::tunnel::{BodyError, RemoteSentryInstance};
 
-// 1 MB max body
-pub const MAX_CONTENT_SIZE: u16 = 1_000;
+// 10 MB max body
+pub const MAX_CONTENT_SIZE: u64 = 10_000_000;
 
 #[derive(Debug, StateData, Clone)]
 struct TunnelConfig {
@@ -68,7 +68,7 @@ impl IntoResponse for HeaderError {
 
 fn check_content_length(headers: &HeaderMap) -> Result<(), HeaderError> {
     if let Some(content_length_value) = headers.get(header::CONTENT_LENGTH) {
-        let content_length = u16::from_str(
+        let content_length = u64::from_str(
             content_length_value
                 .to_str()
                 .map_err(|_| HeaderError::CouldNotParseContentLength)?,
