@@ -16,7 +16,6 @@ use std::error::Error;
 use std::fmt::{Debug, Display, Formatter};
 use std::str::FromStr;
 
-
 /**
  * Represent a sentry envelope
  */
@@ -41,11 +40,17 @@ pub enum BodyError {
 impl Display for BodyError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            BodyError::InvalidNumberOfLines => f.write_str("Invalid number of line in request body. Should be 3."),
-            BodyError::MissingDsnKeyInHeader => f.write_str("The dsn key is missing from the header header"),
-            BodyError::InvalidHeaderJson(e) => f.write_fmt(format_args!("Failed to parse header json : {}", e)),
+            BodyError::InvalidNumberOfLines => {
+                f.write_str("Invalid number of line in request body. Should be 3.")
+            }
+            BodyError::MissingDsnKeyInHeader => {
+                f.write_str("The dsn key is missing from the header header")
+            }
+            BodyError::InvalidHeaderJson(e) => {
+                f.write_fmt(format_args!("Failed to parse header json : {}", e))
+            }
             BodyError::InvalidProjectId => f.write_str("Unauthorized project ID"),
-            BodyError::InvalidDsnValue => f.write_str("Failed to parse dsn value")
+            BodyError::InvalidDsnValue => f.write_str("Failed to parse dsn value"),
         }
     }
 }

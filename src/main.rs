@@ -1,8 +1,8 @@
+use futures_util::future::{self, Either, FutureExt};
+use log::*;
 use sentry_tunnel::config::Config;
 use sentry_tunnel::server::router;
 use tokio::signal;
-use futures_util::future::{self, Either, FutureExt};
-use log::*;
 
 #[tokio::main]
 pub async fn main() {
@@ -11,9 +11,6 @@ pub async fn main() {
         .modules([module_path!()])
         .init()
         .unwrap(); // Error, Warn and Info
-
-    
-
 
     match Config::new_from_env_variables() {
         Ok(config) => {
@@ -24,14 +21,15 @@ pub async fn main() {
                 println!("Ctrl+C pressed");
             };
 
-            let server = gotham::init_server(addr, move || Ok(router(&config.tunnel_path.clone(), config.clone())));
+            let server = gotham::init_server(addr, move || {
+                Ok(router(&config.tunnel_path.clone(), config.clone()))
+            });
             let res = future::select(server.boxed(), signal.boxed()).await;
             if let Either::Left((Err(err), _)) = res {
                 println!("Error starting gotham: {:?}", err);
             } else {
                 println!("Shutting down gracefully");
             }
-
         }
         Err(e) => {
             error!("{}", e);

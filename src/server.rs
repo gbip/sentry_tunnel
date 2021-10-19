@@ -80,85 +80,76 @@ impl IntoResponse for HeaderError {
 /**
  * Returns Ok if the request associated with those headers can be handled
  */
-fn check_content_length(headers: &HeaderMap) -> Result<(), HeaderError> {
+fn check_content_length(headers: &HeaderMap) -> Result<(), AError> {
     if let Some(content_length_value) = headers.get(header::CONTENT_LENGTH) {
         let content_length = u64::from_str(
             content_length_value
                 .to_str()
-                .map_err(|_| HeaderError::CouldNotParseContentLength)?,
+                .map_err(|_| AError::new(HeaderError::CouldNotParseContentLength))?,
         )
-        .map_err(|_| HeaderError::CouldNotParseContentLength)?;
+        .map_err(|_| AError::new(HeaderError::CouldNotParseContentLength))?;
         if content_length > MAX_CONTENT_SIZE {
-            return Err(HeaderError::ContentIsTooBig);
+            return Err(AError::new(HeaderError::ContentIsTooBig));
         } else {
             return Ok(());
         }
     }
-    Err(HeaderError::MissingContentLength)
+    Err(AError::new(HeaderError::MissingContentLength))
 }
 
-fn make_response<T>(error : T, state : State) -> HandlerResult where T : IntoResponse {
-    let res = error.into_response(&state);
-    Ok((state, res))
+async fn tunnel_handler(state: &mut State) -> Result<Response<Body>, AError> {
+    let headers = HeaderMap::take_from(state);
+    check_content_length(&headers)?;
+
+    let full_body = body::to_bytes(Body::take_from(state)).await?;
+    let body_content = String::from_utf8(full_body.to_vec())?;
+    let sentry_instance = parse_body(body_content)?;
+
+    let config = TunnelConfig::borrow_from(state);
+    let hosts = &config.inner.remote_hosts;
+    if config
+        .inner
+        .project_id_is_allowed(sentry_instance.dsn.project_id().value())
+    {
+        if sentry_instance.dsn_host_is_valid(hosts) {
+            match sentry_instance.forward().await {
+                Err(e) => {
+                    error!(
+                        "Failed to forward request to sentry : {} - Host = {}",
+                        e,
+                        sentry_instance.dsn.host()
+                    );
+                    let mime = "text/plain".parse::<Mime>().unwrap();
+                    let res: (StatusCode, Mime, String) =
+                        (StatusCode::INTERNAL_SERVER_ERROR, mime, format!("{}", e));
+                    let res = res.into_response(state);
+                    Ok(res)
+                }
+                Ok(_) => {
+                    let res = create_empty_response(state, StatusCode::OK);
+                    Ok(res)
+                }
+            }
+        } else {
+            Err(AError::new(HeaderError::InvalidHost))
+        }
+    } else {
+        Err(AError::new(BodyError::InvalidProjectId))
+    }
 }
 
 async fn post_tunnel_handler(mut state: State) -> HandlerResult {
-    let headers = HeaderMap::take_from(&mut state);
-
-    match check_content_length(&headers) {
-        Ok(_) => {
-            let full_body = body::to_bytes(Body::take_from(&mut state)).await;
-            match full_body {
-                Ok(valid_body) => {
-                    let body_content = String::from_utf8(valid_body.to_vec()).unwrap();
-                    match parse_body(body_content) {
-                        Ok(sentry_instance) => {
-                            let config = TunnelConfig::borrow_from(&state);
-                            let hosts = &config.inner.remote_hosts;
-                            if config
-                                .inner
-                                .project_id_is_allowed(sentry_instance.dsn.project_id().value())
-                            {
-                                if sentry_instance.dsn_host_is_valid(hosts) {
-                                    match sentry_instance.forward().await {
-                                        Err(e) => {
-                                            error!("Failed to forward request to sentry : {} - Host = {}", e, sentry_instance.dsn.host());
-                                            let mime = "text/plain".parse::<Mime>().unwrap();
-                                            let res: (StatusCode, Mime, String) = (
-                                                StatusCode::INTERNAL_SERVER_ERROR,
-                                                mime,
-                                                format!("{}", e),
-                                            );
-                                            make_response(res, state)
-                                        }
-                                        Ok(_) => {
-                                            let res = create_empty_response(&state, StatusCode::OK);
-                                            Ok((state, res))
-                                        }
-                                    }
-                                } else {
-                                    make_response(HeaderError::InvalidHost, state)
-                                }
-                            } else {
-                                make_response(BodyError::InvalidProjectId, state)
-                            }
-                        }
-                        Err(e) => {
-                            let mime = "text/plain".parse::<Mime>().unwrap();
-
-                            let res: (StatusCode, Mime, String) =
-                                (StatusCode::BAD_REQUEST, mime, format!("{}", e));
-                            let res = res.into_response(&state);
-
-                            Ok((state, res))
-                        }
-                    }
-                }
-                Err(e) => Err((state, e.into())),
-            }
-        }
-        Err(e) => {
-            make_response(e, state)
+    match tunnel_handler(&mut state).await {
+        Ok(val) => Ok((state, val)),
+        Err(error) => {
+            let mime = "text/plain".parse::<Mime>().unwrap();
+            let res: (StatusCode, Mime, String) = (
+                StatusCode::BAD_REQUEST,
+                mime,
+                format!("{}", error),
+            );
+            let response = res.into_response(&state);
+            Ok((state, response))
         }
     }
 }
