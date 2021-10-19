@@ -1,7 +1,7 @@
 CHANGELOG
 =========
 
-1.0.X		(XXXX-XX-XX)
+1.0.3		(2021-10-19)
 ------------------------
 
 * Fix server response mime type
