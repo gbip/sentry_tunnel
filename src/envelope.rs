@@ -16,27 +16,36 @@ use std::error::Error;
 use std::fmt::{Debug, Display, Formatter};
 use std::str::FromStr;
 
+
+/**
+ * Represent a sentry envelope
+ */
 #[derive(Debug)]
 pub struct SentryEnvelope {
     pub raw_body: String,
     pub dsn: Dsn,
 }
 
+/**
+ * A body parsing error
+ */
 #[derive(Debug)]
 pub enum BodyError {
-    MalformedBody,
+    InvalidNumberOfLines,
     InvalidHeaderJson(serde_json::Error),
     MissingDsnKeyInHeader,
+    InvalidDsnValue,
     InvalidProjectId,
 }
 
 impl Display for BodyError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            BodyError::MalformedBody => f.write_str("Malformed HTTP Body"),
-            BodyError::MissingDsnKeyInHeader => f.write_str("dsn key was not found in header"),
-            BodyError::InvalidHeaderJson(e) => f.write_fmt(format_args!("{}", e)),
+            BodyError::InvalidNumberOfLines => f.write_str("Invalid number of line in request body. Should be 3."),
+            BodyError::MissingDsnKeyInHeader => f.write_str("The dsn key is missing from the header header"),
+            BodyError::InvalidHeaderJson(e) => f.write_fmt(format_args!("Failed to parse header json : {}", e)),
             BodyError::InvalidProjectId => f.write_str("Unauthorized project ID"),
+            BodyError::InvalidDsnValue => f.write_str("Failed to parse dsn value")
         }
     }
 }
@@ -52,6 +61,9 @@ impl IntoResponse for BodyError {
 }
 
 impl SentryEnvelope {
+    /**
+     * Returns true if this envelope is for an host that we are allowed to forward requests to
+     */
     pub fn dsn_host_is_valid(&self, host: &[String]) -> bool {
         let envelope_host = self.dsn.host().to_string();
         host.iter()
@@ -59,6 +71,9 @@ impl SentryEnvelope {
             .any(|x| x == envelope_host)
     }
 
+    /**
+     * Forward this envelope to the destination sentry relay
+     */
     pub async fn forward(&self) -> Result<(), AError> {
         let uri = self.dsn.envelope_api_url().to_string() + "?sentry_key=" + self.dsn.public_key();
         let request = Request::builder()
@@ -78,9 +93,12 @@ impl SentryEnvelope {
         }
     }
 
+    /**
+     * Attempt to parse a string into an envelope
+     */
     pub fn try_new_from_body(body: String) -> Result<SentryEnvelope, AError> {
         if body.lines().count() == 3 {
-            let header = body.lines().next().ok_or(BodyError::MalformedBody)?;
+            let header = body.lines().next().ok_or(BodyError::InvalidNumberOfLines)?;
             let header: Value =
                 serde_json::from_str(header).map_err(|e| BodyError::InvalidHeaderJson(e))?;
             if let Some(dsn) = header.get("dsn") {
@@ -91,13 +109,13 @@ impl SentryEnvelope {
                         raw_body: body,
                     })
                 } else {
-                    Err(AError::new(BodyError::MalformedBody))
+                    Err(AError::new(BodyError::InvalidDsnValue))
                 }
             } else {
                 Err(AError::new(BodyError::MissingDsnKeyInHeader))
             }
         } else {
-            Err(AError::new(BodyError::MalformedBody))
+            Err(AError::new(BodyError::InvalidNumberOfLines))
         }
     }
 }

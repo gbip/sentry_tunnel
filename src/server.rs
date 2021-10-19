@@ -29,6 +29,9 @@ use crate::envelope::{BodyError, SentryEnvelope};
 // 10 MB max body
 pub const MAX_CONTENT_SIZE: u64 = 10_000_000;
 
+/**
+ * This struct is used to share read-only data between HTTP request handlers
+ */
 #[derive(Debug, StateData, Clone)]
 struct TunnelConfig {
     inner: Arc<Config>,
@@ -38,6 +41,9 @@ fn parse_body(body: String) -> Result<SentryEnvelope, AError> {
     SentryEnvelope::try_new_from_body(body)
 }
 
+/**
+ * This enum reprensent an header parsing error
+ */
 #[derive(Debug)]
 pub enum HeaderError {
     MissingContentLength,
@@ -51,13 +57,13 @@ impl Error for HeaderError {}
 impl Display for HeaderError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            HeaderError::MissingContentLength => f.write_str("Missing content length header"),
-            HeaderError::ContentIsTooBig => f.write_str("Content length too big"),
+            HeaderError::MissingContentLength => f.write_str("Missing content length header."),
+            HeaderError::ContentIsTooBig => f.write_str("Content length too big."),
             HeaderError::CouldNotParseContentLength => {
-                f.write_str("could not parse content length header")
+                f.write_str("could not parse content length header.")
             }
             HeaderError::InvalidHost => f.write_str(
-                "Invalid sentry host, check your config against the dsn used in the request",
+                "Invalid sentry host, check your config against the dsn used in the request.",
             ),
         }
     }
@@ -71,6 +77,9 @@ impl IntoResponse for HeaderError {
     }
 }
 
+/**
+ * Returns Ok if the request associated with those headers can be handled
+ */
 fn check_content_length(headers: &HeaderMap) -> Result<(), HeaderError> {
     if let Some(content_length_value) = headers.get(header::CONTENT_LENGTH) {
         let content_length = u64::from_str(
@@ -93,7 +102,6 @@ fn make_response<T>(error : T, state : State) -> HandlerResult where T : IntoRes
     Ok((state, res))
 }
 
-/// Extracts the elements of the POST request and prints them
 async fn post_tunnel_handler(mut state: State) -> HandlerResult {
     let headers = HeaderMap::take_from(&mut state);
 
