@@ -38,7 +38,15 @@ RUN rm -f ./target/release/deps/libsentry_tunnel*
 RUN cargo build --target x86_64-unknown-linux-musl --release
 
 
-# ===================================================
+#===========================#
+# Install ssl certificates  #
+#===========================#
+FROM alpine:3.14 as alpine
+RUN apk add -U --no-cache ca-certificates
+
+# ==========================#
+# Final image				#
+# ==========================#
 FROM scratch
 
 # Import from builder.
@@ -49,7 +57,7 @@ WORKDIR /sentry_tunnel
 
 # Copy our build
 COPY --from=builder /sentry_tunnel/target/x86_64-unknown-linux-musl/release/sentry_tunnel ./
-
+COPY --from=alpine /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 # Use an unprivileged user.
 USER sentry_tunnel:sentry_tunnel
 
