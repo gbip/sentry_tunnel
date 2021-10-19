@@ -7,6 +7,8 @@ The implementation is based on the explanation provided by [the official sentry 
 
 [From the sentry documentation](https://docs.sentry.io/platforms/javascript/troubleshooting/#using-the-tunnel-option)
 
+Please note that the **minimal Relay version is v21.6.0**. [Source](https://develop.sentry.dev/sdk/envelopes/#authentication)
+
 ## Configuration
 
 This proxy looks for the following environnement variables : 
