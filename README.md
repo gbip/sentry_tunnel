@@ -14,7 +14,7 @@ Please note that the **minimal supported Relay version is v21.6.0**. Older versi
 
 This proxy looks for the following environnement variables : 
 
-* `TUNNEL_REMOTE_HOST` : The url where to forward the tunneled requests. Example : `TUNNEL_REMOTE_HOST=https://sentry.example.com`.
+* `TUNNEL_REMOTE_HOST` : A comma separted list of sentry relays which are allowed to be tuneled by this service. Example : `TUNNEL_REMOTE_HOST=https://sentry.example.com, https://sentry2.example.com`.
 * `TUNNEL_PROJECT_IDS` : A comma separated list of valid project ids. Request that are not from those projects will be rejected. Example : `TUNNEL_PROJECT_IDS=456,78,10840`.
 * `TUNNEL_LISTEN_PORT` : The port that this application will bind to. Example : `TUNNEL_LISTEN_PORT=7878`. This is optional, the default value is 7878.
 * `TUNNEL_PATH` : The url path where the tunnel will be waiting for tunneled request. Example : `TUNNEL_PATH=/tunnel`. This is optional, the default value is '/tunnel'.

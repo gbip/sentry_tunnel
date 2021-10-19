@@ -4,7 +4,7 @@ use envmnt::ListOptions;
 
 #[derive(Clone, Debug)]
 pub struct Config {
-    pub remote_host: String,
+    pub remote_hosts: Vec<String>,
     pub project_ids: Vec<String>,
     pub port: u16,
     pub tunnel_path: String,
@@ -14,8 +14,8 @@ pub struct Config {
 impl Display for Config {
     fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
         f.write_fmt(format_args!(
-            "Listening on {}:{}{}\nForwarding requests to : {}\nValid project ids : {:?}",
-            self.ip, self.port, self.tunnel_path, self.remote_host, self.project_ids
+            "Listening on {}:{}{}\nForwarding requests to : {:?}\nValid project ids : {:?}",
+            self.ip, self.port, self.tunnel_path, self.remote_hosts, self.project_ids
         ))
     }
 }
@@ -23,7 +23,7 @@ impl Display for Config {
 impl Config {
     /**
      * Create a new config from env variables :
-     * - TUNNEL_REMOTE_HOST : String with the distant sentry host
+     * - TUNNEL_REMOTE_HOST : Comma separated list of valid sentry relays
      * - TUNNEL_PROJECT_IDS : Comma separated list of valid project ids that can be forwarded to
      * sentry
      * - TUNNEL_LISTEN_PORT : Optionnal listen port, 7878 by default
@@ -33,7 +33,7 @@ impl Config {
     pub fn new_from_env_variables() -> Result<Config, String> {
         let mut options = ListOptions::new();
         options.separator = Some(",".to_string());
-        let remote_host : String = envmnt::get_parse("TUNNEL_REMOTE_HOST").map_err(|_| "Missing sentry remote. Please set the environnement variable 'TUNNEL_REMOTE_HOST' to specify the sentry remote.".to_string())?;
+        let remote_hosts  = envmnt::get_list_with_options("TUNNEL_REMOTE_HOST", &options).ok_or_else(|| "Missing sentry remote. Please set the environnement variable 'TUNNEL_REMOTE_HOST' to specify the sentry remote.".to_string())?;
         let project_ids = envmnt::get_list_with_options("TUNNEL_PROJECT_IDS", &options)
             .ok_or_else(|| {
                 "Project ID unspecified. Use 'export TUNNEL_PROJECT_IDS' to provide valid ids."
@@ -44,7 +44,7 @@ impl Config {
             envmnt::get_parse("TUNNEL_PATH").unwrap_or_else(|_| "/tunnel".to_string());
         let ip: String = envmnt::get_parse("TUNNEL_IP").unwrap_or_else(|_| "127.0.0.1".to_string());
         Ok(Config {
-            remote_host,
+            remote_hosts,
             project_ids,
             port,
             tunnel_path,

@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+1.0.7		(XXXX-XX-XX)
+-----------------------
+
+* Allow multiple sentry relays in configuration
+
 1.0.6		(2021-10-19)
 -----------------------
 

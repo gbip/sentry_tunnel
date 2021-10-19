@@ -17,7 +17,7 @@ mod tests {
             then.status(200);
         });
         let test_config = Config {
-            remote_host: server.url(""),
+            remote_hosts: vec![server.url("")],
             project_ids: vec!["5".to_string()],
             port: 7878,
             tunnel_path: "/tunnel".to_string(),
@@ -57,7 +57,7 @@ mod tests {
     #[test]
     fn test_invalid_project_id() {
         let test_config = Config {
-            remote_host: "https://sentry.example.com/".to_string(),
+            remote_hosts: vec!["https://sentry.example.com/".to_string()],
             project_ids: vec!["5".to_string()],
             port: 7878,
             tunnel_path: "/tunnel".to_string(),
@@ -96,7 +96,7 @@ mod tests {
     #[test]
     fn test_missing_dsn() {
         let test_config = Config {
-            remote_host: "https://sentry.example.com/".to_string(),
+            remote_hosts: vec!["https://sentry.example.com/".to_string()],
             project_ids: vec!["5".to_string()],
             port: 7878,
             tunnel_path: "/tunnel".to_string(),
@@ -135,7 +135,7 @@ mod tests {
     #[test]
     fn test_dsn_host_invalid() {
         let test_config = Config {
-            remote_host: "https://sentry.example.com/".to_string(),
+            remote_hosts: vec!["https://sentry.example.com/".to_string()],
             project_ids: vec!["5".to_string()],
             port: 7878,
             tunnel_path: "/tunnel".to_string(),

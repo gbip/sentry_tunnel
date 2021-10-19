@@ -101,17 +101,15 @@ async fn post_tunnel_handler(mut state: State) -> HandlerResult {
                     match parse_body(body_content) {
                         Ok(sentry_instance) => {
                             let config = TunnelConfig::borrow_from(&state);
-                            let host = &config.inner.remote_host;
+                            let hosts = &config.inner.remote_hosts;
                             if config
                                 .inner
                                 .project_id_is_allowed(sentry_instance.dsn.project_id().value())
                             {
-                                let mut hosts = vec![];
-                                hosts.push(host.clone());
                                 if sentry_instance.dsn_host_is_valid(hosts) {
                                     match sentry_instance.forward().await {
                                         Err(e) => {
-                                            error!("Failed to forward request to sentry : {} - Host = {}", e, host);
+                                            error!("Failed to forward request to sentry : {} - Host = {}", e, sentry_instance.dsn.host());
                                             let mime = "text/plain".parse::<Mime>().unwrap();
                                             let res: (StatusCode, Mime, String) = (
                                                 StatusCode::INTERNAL_SERVER_ERROR,
