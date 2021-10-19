@@ -6,17 +6,20 @@ use gotham::hyper::{body::Body, Response};
 use gotham::state::State;
 use isahc::{Request, RequestExt};
 use mime::Mime;
+use sentry_types::Dsn;
 use serde_json::Value;
+use url::Url;
 
 use log::*;
 
 use std::error::Error;
 use std::fmt::{Debug, Display, Formatter};
+use std::str::FromStr;
 
 #[derive(Debug)]
 pub struct RemoteSentryInstance {
-    pub project_id: String,
     pub raw_body: String,
+    pub dsn: Dsn,
 }
 
 #[derive(Debug)]
@@ -49,8 +52,17 @@ impl IntoResponse for BodyError {
 }
 
 impl RemoteSentryInstance {
-    pub async fn forward(self, host: &str) -> Result<(), AError> {
-        let uri = format!("{}/api/{}/envelope/", host, self.project_id);
+    pub fn dsn_host_is_valid(&self, host: Vec<String>) -> bool {
+        let envelope_host = self.dsn.host().to_string();
+        host
+            .iter()
+            .map(|h| Url::parse(h).unwrap().host_str().unwrap_or("").to_string())
+            .any(|x| x == envelope_host)
+    }
+
+    pub async fn forward(self) -> Result<(), AError> {
+        let uri = self.dsn.envelope_api_url().to_string();
+        println!("ICI {}", uri);
         let request = Request::builder()
             .uri(uri)
             .header("Content-type", "application/x-sentry-envelope")
@@ -64,31 +76,30 @@ impl RemoteSentryInstance {
         );
         match request.send_async().await {
             Ok(_) => Ok(()),
-            Err(e) => Err(e.into())
+            Err(e) => Err(e.into()),
         }
     }
 
-    pub fn try_new_from_body(body: String) -> Result<RemoteSentryInstance, BodyError> {
+    pub fn try_new_from_body(body: String) -> Result<RemoteSentryInstance, AError> {
         if body.lines().count() == 3 {
             let header = body.lines().next().ok_or(BodyError::MalformedBody)?;
             let header: Value =
                 serde_json::from_str(header).map_err(|e| BodyError::InvalidHeaderJson(e))?;
             if let Some(dsn) = header.get("dsn") {
                 if let Some(dsn_str) = dsn.as_str() {
-                    let (_url, project_id) =
-                        dsn_str.rsplit_once('/').ok_or(BodyError::MalformedBody)?;
+                    let dsn = Dsn::from_str(dsn_str)?;
                     Ok(RemoteSentryInstance {
-                        project_id: project_id.to_string(),
+                        dsn,
                         raw_body: body,
                     })
                 } else {
-                    Err(BodyError::MalformedBody)
+                    Err(AError::new(BodyError::MalformedBody))
                 }
             } else {
-                Err(BodyError::MissingDsnKeyInHeader)
+                Err(AError::new(BodyError::MissingDsnKeyInHeader))
             }
         } else {
-            Err(BodyError::MalformedBody)
+            Err(AError::new(BodyError::MalformedBody))
         }
     }
 }

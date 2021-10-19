@@ -52,7 +52,8 @@ impl Config {
         })
     }
 
-    pub fn project_id_is_allowed(&self, id: &String) -> bool {
-        self.project_ids.contains(id)
+    pub fn project_id_is_allowed(&self, id: u64) -> bool {
+        let id_str = format!("{}", id);
+        self.project_ids.contains(&id_str)
     }
 }
