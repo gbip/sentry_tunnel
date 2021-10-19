@@ -17,7 +17,7 @@ use std::fmt::{Debug, Display, Formatter};
 use std::str::FromStr;
 
 #[derive(Debug)]
-pub struct RemoteSentryInstance {
+pub struct SentryEnvelope {
     pub raw_body: String,
     pub dsn: Dsn,
 }
@@ -51,7 +51,7 @@ impl IntoResponse for BodyError {
     }
 }
 
-impl RemoteSentryInstance {
+impl SentryEnvelope {
     pub fn dsn_host_is_valid(&self, host: &[String]) -> bool {
         let envelope_host = self.dsn.host().to_string();
         host.iter()
@@ -78,7 +78,7 @@ impl RemoteSentryInstance {
         }
     }
 
-    pub fn try_new_from_body(body: String) -> Result<RemoteSentryInstance, AError> {
+    pub fn try_new_from_body(body: String) -> Result<SentryEnvelope, AError> {
         if body.lines().count() == 3 {
             let header = body.lines().next().ok_or(BodyError::MalformedBody)?;
             let header: Value =
@@ -86,7 +86,7 @@ impl RemoteSentryInstance {
             if let Some(dsn) = header.get("dsn") {
                 if let Some(dsn_str) = dsn.as_str() {
                     let dsn = Dsn::from_str(dsn_str)?;
-                    Ok(RemoteSentryInstance {
+                    Ok(SentryEnvelope {
                         dsn,
                         raw_body: body,
                     })

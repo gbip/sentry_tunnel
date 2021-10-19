@@ -1,7 +1,7 @@
 use anyhow::Error as AError;
+
 use gotham::handler::HandlerResult;
 use gotham::handler::IntoResponse;
-
 use gotham::helpers::http::response::create_empty_response;
 use gotham::helpers::http::response::create_response;
 use gotham::hyper::{body, header, Body, HeaderMap, Response, StatusCode};
@@ -12,19 +12,19 @@ use gotham::router::{
     builder::build_router, builder::DefineSingleRoute, builder::DrawRoutes, Router,
 };
 use gotham::state::{FromState, State};
-use mime::Mime;
-
 use gotham_derive::StateData;
+
+use log::*;
+
+use mime::Mime;
 
 use std::error::Error;
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 use std::sync::Arc;
 
-use log::*;
-
 use crate::config::Config;
-use crate::tunnel::{BodyError, RemoteSentryInstance};
+use crate::envelope::{BodyError, SentryEnvelope};
 
 // 10 MB max body
 pub const MAX_CONTENT_SIZE: u64 = 10_000_000;
@@ -34,8 +34,8 @@ struct TunnelConfig {
     inner: Arc<Config>,
 }
 
-fn parse_body(body: String) -> Result<RemoteSentryInstance, AError> {
-    RemoteSentryInstance::try_new_from_body(body)
+fn parse_body(body: String) -> Result<SentryEnvelope, AError> {
+    SentryEnvelope::try_new_from_body(body)
 }
 
 #[derive(Debug)]
@@ -88,6 +88,11 @@ fn check_content_length(headers: &HeaderMap) -> Result<(), HeaderError> {
     Err(HeaderError::MissingContentLength)
 }
 
+fn make_response<T>(error : T, state : State) -> HandlerResult where T : IntoResponse {
+    let res = error.into_response(&state);
+    Ok((state, res))
+}
+
 /// Extracts the elements of the POST request and prints them
 async fn post_tunnel_handler(mut state: State) -> HandlerResult {
     let headers = HeaderMap::take_from(&mut state);
@@ -116,8 +121,7 @@ async fn post_tunnel_handler(mut state: State) -> HandlerResult {
                                                 mime,
                                                 format!("{}", e),
                                             );
-                                            let res = res.into_response(&state);
-                                            Ok((state, res))
+                                            make_response(res, state)
                                         }
                                         Ok(_) => {
                                             let res = create_empty_response(&state, StatusCode::OK);
@@ -125,12 +129,10 @@ async fn post_tunnel_handler(mut state: State) -> HandlerResult {
                                         }
                                     }
                                 } else {
-                                    let res = HeaderError::InvalidHost.into_response(&state);
-                                    Ok((state, res))
+                                    make_response(HeaderError::InvalidHost, state)
                                 }
                             } else {
-                                let res = BodyError::InvalidProjectId.into_response(&state);
-                                Ok((state, res))
+                                make_response(BodyError::InvalidProjectId, state)
                             }
                         }
                         Err(e) => {
@@ -148,8 +150,7 @@ async fn post_tunnel_handler(mut state: State) -> HandlerResult {
             }
         }
         Err(e) => {
-            let res = e.into_response(&state);
-            Ok((state, res))
+            make_response(e, state)
         }
     }
 }

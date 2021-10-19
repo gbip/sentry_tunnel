@@ -1,6 +1,6 @@
-use std::fmt::{Display, Formatter};
-
 use envmnt::ListOptions;
+
+use std::fmt::{Display, Formatter};
 
 #[derive(Clone, Debug)]
 pub struct Config {

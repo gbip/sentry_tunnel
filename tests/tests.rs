@@ -7,7 +7,7 @@ mod tests {
     use mime::Mime;
     use sentry_tunnel::config::Config;
     use sentry_tunnel::server::{router, HeaderError};
-    use sentry_tunnel::tunnel::BodyError;
+    use sentry_tunnel::envelope::BodyError;
 
     #[test]
     fn test_correct_behaviour() {
