@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+1.0.4		(2021-10-19)
+------------------------
+
+* Propagate http response from sentry to the original client
+
 1.0.3		(2021-10-19)
 ------------------------
 
