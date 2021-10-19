@@ -50,7 +50,7 @@ impl IntoResponse for BodyError {
 
 impl RemoteSentryInstance {
     pub async fn forward(self, host: &str) -> Result<(), AError> {
-        let uri = format!("{}/api/{}/envelope", host, self.project_id);
+        let uri = format!("{}/api/{}/envelope/", host, self.project_id);
         let request = Request::builder()
             .uri(uri)
             .header("Content-type", "application/x-sentry-envelope")
@@ -62,8 +62,10 @@ impl RemoteSentryInstance {
             request.uri(),
             request.body()
         );
-        request.send_async().await?;
-        Ok(())
+        match request.send_async().await {
+            Ok(_) => Ok(()),
+            Err(e) => Err(e.into())
+        }
     }
 
     pub fn try_new_from_body(body: String) -> Result<RemoteSentryInstance, BodyError> {
