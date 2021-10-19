@@ -54,15 +54,13 @@ impl IntoResponse for BodyError {
 impl RemoteSentryInstance {
     pub fn dsn_host_is_valid(&self, host: Vec<String>) -> bool {
         let envelope_host = self.dsn.host().to_string();
-        host
-            .iter()
+        host.iter()
             .map(|h| Url::parse(h).unwrap().host_str().unwrap_or("").to_string())
             .any(|x| x == envelope_host)
     }
 
     pub async fn forward(self) -> Result<(), AError> {
-        let uri = self.dsn.envelope_api_url().to_string();
-        println!("ICI {}", uri);
+        let uri = self.dsn.envelope_api_url().to_string() + "?sentry_key=" + self.dsn.public_key();
         let request = Request::builder()
             .uri(uri)
             .header("Content-type", "application/x-sentry-envelope")

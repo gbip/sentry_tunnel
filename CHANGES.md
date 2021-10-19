@@ -5,6 +5,7 @@ CHANGELOG
 -----------------------
 
 * check dsn hostname against the config
+* add 'sentry_key' parameter to handle relay version before 21.6
 
 1.0.5		(2021-10-19)
 -----------------------
