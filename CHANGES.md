@@ -4,7 +4,8 @@ CHANGELOG
 1.0.X		(XXXX-XX-XX)
 ------------------------
 
-* Fix response mime type
+* Fix server response mime type
+* Fix sentry forward url
 
 1.0.2		(2021-10-19)
 ------------------------
