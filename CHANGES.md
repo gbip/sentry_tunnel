@@ -5,6 +5,7 @@ CHANGELOG
 -----------------------
 
 * Allow multiple sentry relays in configuration
+* Handle CTRL + C gracefully
 
 1.0.6		(2021-10-19)
 -----------------------
