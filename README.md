@@ -26,6 +26,8 @@ This proxy looks for the following environnement variables :
 
 ## Running with docker
 
+The docker image [lives here](https://hub.docker.com/repository/docker/sigalen/sentry_tunnel).
+
 An example docker-compose file is provided. Otherwise : 
 
 ```
