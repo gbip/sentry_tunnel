@@ -5,7 +5,7 @@ mod tests {
 
     use mime::Mime;
     use sentry_tunnel::config::Config;
-    use sentry_tunnel::server::{router, HeaderError, MAX_CONTENT_SIZE};
+    use sentry_tunnel::server::{router};
     use sentry_tunnel::tunnel::BodyError;
 
     #[test]

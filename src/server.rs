@@ -101,11 +101,19 @@ async fn post_tunnel_handler(mut state: State) -> HandlerResult {
                                 .inner
                                 .project_id_is_allowed(&sentry_instance.project_id)
                             {
-                                if let Err(e) = sentry_instance.forward(host).await {
-                                    error!("{} - Host = {}", e, host);
+                                match sentry_instance.forward(host).await {
+                                    Err(e) =>  {
+                                        error!("Failed to forward request to sentry : {} - Host = {}", e, host);
+                                        let mime = "text/plain".parse::<Mime>().unwrap();
+                                        let res : (StatusCode, Mime, String) = (StatusCode::INTERNAL_SERVER_ERROR, mime, format!("{}" ,e));
+                                        let res = res.into_response(&state);
+                                        Ok((state, res))
+                                    }
+                                    Ok(_) => {
+                                        let res = create_empty_response(&state, StatusCode::OK);
+                                        Ok((state, res))
+                                    }
                                 }
-                                let res = create_empty_response(&state, StatusCode::OK);
-                                Ok((state, res))
                             } else {
                                 let res = BodyError::InvalidProjectId.into_response(&state);
                                 Ok((state, res))
