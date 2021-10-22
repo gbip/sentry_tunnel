@@ -31,7 +31,7 @@ The docker image [lives here](https://hub.docker.com/repository/docker/sigalen/s
 An example docker-compose file is provided. Otherwise : 
 
 ```
-docker run -e 'TUNNEL_REMOTE_HOST="https://sentry.example.com"' -e 'TUNNEL_PROJECT_IDS=1,5' sigalen/sentry_tunnel
+docker run --rm -e 'TUNNEL_REMOTE_HOST=https://sentry.example.com' -e 'TUNNEL_PROJECT_IDS=1,5' sigalen/sentry_tunnel
 ```
 
 ## License
