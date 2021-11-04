@@ -34,6 +34,62 @@ An example docker-compose file is provided. Otherwise :
 docker run --rm -e 'TUNNEL_REMOTE_HOST=https://sentry.example.com' -e 'TUNNEL_PROJECT_IDS=1,5' sigalen/sentry_tunnel
 ```
 
+## Running without docker
+
+```bash
+python3 -m venv venv  # Install venv
+. venv/bin/activate  # Enable venv
+pip install -r requirements.txt  # Install dependencies
+./manage.py collectstatic
+./manage.py makemessages -l fr
+cp env/.env.docker.prod.djrdo.example .env
+vim .env  # Edit env file, you can remove VIRTUAL_HOST and LETSENCRYPT_HOST lines
+hypercorn --bind 0.0.0.0:8000 djRDO.asgi:application  # You should put this line in a service file :)
+```
+
+Here is an example nginx configuration :
+
+```nginx
+server {
+	listen *:443 ssl;
+	server_name demo.djrdo.florencepaul.com;
+
+	include ssl.conf;
+
+	ssl_certificate fullchain.pem;
+	ssl_certificate_key privkey.pem;
+
+	include certbot.conf;
+	keepalive_timeout 5;
+
+	location /static/ {
+		alias   /<djrdo_path>/static/;
+	}
+	location / {
+		proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+		proxy_set_header Host $http_host;
+		proxy_redirect off;
+		proxy_connect_timeout 90;
+		proxy_send_timeout 180;
+		proxy_read_timeout 180;
+		proxy_buffer_size 16k;
+		proxy_buffers 8 16k;
+		proxy_busy_buffers_size 32k;
+		proxy_intercept_errors on;
+		if (!-f $request_filename) {
+			proxy_pass http://djrdo_backend;
+			break;
+		}
+	}
+}
+
+upstream djrdo_backend {
+	server 127.0.0.1:8000;
+}
+
+
+```
+
 ## License
 
 BSD-2
