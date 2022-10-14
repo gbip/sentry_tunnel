@@ -1,3 +1,4 @@
+use crate::config::Host;
 use gotham::anyhow::Error as AError;
 use gotham::handler::IntoResponse;
 use gotham::helpers::http::response::create_response;
@@ -8,7 +9,6 @@ use isahc::{Request, RequestExt};
 use mime::Mime;
 use sentry_types::Dsn;
 use serde_json::Value;
-use url::Url;
 
 use log::*;
 
@@ -69,11 +69,10 @@ impl SentryEnvelope {
     /**
      * Returns true if this envelope is for an host that we are allowed to forward requests to
      */
-    pub fn dsn_host_is_valid(&self, host: &[String]) -> bool {
+    pub fn dsn_host_is_valid(&self, host: &[Host]) -> bool {
         let envelope_host = self.dsn.host().to_string();
         host.iter()
-            .map(|h| Url::parse(h).unwrap().host_str().unwrap_or("").to_string())
-            .any(|x| x == envelope_host)
+            .any(|x| x.0 == envelope_host)
     }
 
     /**
