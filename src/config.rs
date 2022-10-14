@@ -73,7 +73,7 @@ impl Config {
         self.project_ids.contains(&id_str)
     }
 
-    fn clean_remote_hosts(hosts : &[String]) -> Vec<Host>{
+    pub fn clean_remote_hosts(hosts : &[String]) -> Vec<Host>{
         let mut result = vec!();
         for host in hosts {
             if let Ok(host_url) = Url::parse(host) {
