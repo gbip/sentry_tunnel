@@ -6,7 +6,6 @@ services:
     ports:
       - 7878:7878
     environment : 
-      - TUNNEL_REMOTE_HOST=https://stats.xliee.ru
       - TUNNEL_PROJECT_IDS=2
       - TUNNEL_IP=0.0.0.0
       - TUNNEL_PATH=/
