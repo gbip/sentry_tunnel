@@ -24,6 +24,7 @@ pub struct SentryEnvelope {
     pub raw_body: Vec<u8>,
     pub dsn: Dsn,
     pub is_safe: bool,
+    pub user_ip: String,
 }
 
 /**
@@ -81,9 +82,11 @@ impl SentryEnvelope {
      */
     pub async fn forward(&self) -> Result<(), AError> {
         let uri = self.dsn.envelope_api_url().to_string() + "?sentry_key=" + self.dsn.public_key();
+        let userIp = self.user_ip.clone();
         let request = Request::builder()
             .uri(uri)
             .header("Content-type", "application/x-sentry-envelope")
+            .header("x-forwarded-for", self.user_ip.clone())
             .method("POST")
             .body(if !self.is_safe {
                 self.raw_body.clone()
@@ -113,6 +116,13 @@ impl SentryEnvelope {
             Ok(_) => Ok(()),
             Err(e) => Err(e.into()),
         }
+    }
+
+    /**
+    * Set user IP
+    */
+    pub fn set_user_ip(&mut self, user_ip: &str) {
+        self.user_ip = user_ip.to_string();
     }
 
     /**
@@ -161,6 +171,7 @@ impl SentryEnvelope {
                 dsn,
                 raw_body: fullBody,
                 is_safe,
+                user_ip: String::from("unknown"),
             })
         } else {
             Err(AError::new(BodyError::MissingDsnKeyInHeader))

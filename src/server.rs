@@ -100,6 +100,17 @@ fn check_content_length(headers: &HeaderMap) -> Result<(), AError> {
 async fn tunnel_handler(state: &mut State) -> Result<Response<Body>, AError> {
     let headers = HeaderMap::take_from(state);
     check_content_length(&headers)?;
+    // User IP
+    let user_ip = headers
+        .get("X-Forwarded-For")
+        .and_then(|v| v.to_str().ok())
+        .and_then(|s| s.split(',').next())
+        .and_then(|s| s.trim().parse::<std::net::IpAddr>().ok())
+        .unwrap_or("0.0.0.0".parse::<std::net::IpAddr>().unwrap())
+        .to_string();
+
+
+    info!("user_ip = {:?}", user_ip);
 
     let mut full_body = body::to_bytes(Body::take_from(state)).await?;
     let original_body = full_body.clone();
@@ -122,7 +133,12 @@ async fn tunnel_handler(state: &mut State) -> Result<Response<Body>, AError> {
     // info!("full_body = {:?}", original_body);
     // info!("body_content = {:?}", body_content);
     info!("is_safe = {:?}", is_safe);
-    let sentry_instance = parse_body(body_content, original_body.to_vec(), is_safe)?;
+    let mut sentry_instance = parse_body(body_content, original_body.to_vec(), is_safe)?;
+
+    // if user ip
+    if user_ip != "0.0.0.0" {
+        sentry_instance.set_user_ip(&user_ip);
+    }
 
     let config = TunnelConfig::borrow_from(state);
     let hosts = &config.inner.remote_hosts;
