@@ -154,6 +154,16 @@ async fn post_tunnel_handler(mut state: State) -> HandlerResult {
     }
 }
 
+
+async fn health_handler(state: State) -> HandlerResult {
+    let response = Response::builder()
+        .status(StatusCode::OK)
+        .header("Content-Type", "text/plain")
+        .body(Body::from("OK"))
+        .unwrap();
+    Ok((state, response))
+}
+
 pub fn router(path: &str, config: Config) -> Router {
     let middleware = StateMiddleware::new(TunnelConfig {
         inner: Arc::new(config),
@@ -163,5 +173,6 @@ pub fn router(path: &str, config: Config) -> Router {
 
     build_router(chain, pipelines, |route| {
         route.post(path).to_async(post_tunnel_handler);
+        route.get("/healthz").to_async(health_handler);
     })
 }
