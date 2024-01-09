@@ -41,6 +41,10 @@ cd sentry_tunnel
 cargo run --release # Build & run
 ```
 
+# Other relevant project
+
+* [sentry-tunneler](https://github.com/JoeyEamigh/sentry-tunneler)
+
 ## License
 
 BSD-2
