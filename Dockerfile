@@ -38,7 +38,9 @@ RUN touch src/lib.rs
 RUN rm -f ./target/release/deps/sentry_tunnel*
 RUN rm -f ./target/release/deps/libsentry_tunnel*
 RUN cargo build --target ${ARCH}-unknown-linux-musl --release
+RUN mkdir /release/
 
+RUN cp ./target/${ARCH}-unknown-linux-musl/release/sentry_tunnel /release/sentry_tunnel
 
 #===========================#
 # Install ssl certificates  #
@@ -59,7 +61,7 @@ COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 WORKDIR /sentry_tunnel
 
 # Copy our build
-COPY --from=builder /sentry_tunnel/target/${ARCH}-unknown-linux-musl/release/sentry_tunnel ./
+COPY --from=builder /release/sentry_tunnel ./
 COPY --from=alpine /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 # Use an unprivileged user.
 USER sentry_tunnel:sentry_tunnel
