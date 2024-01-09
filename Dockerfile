@@ -1,9 +1,11 @@
 ####################################################################################################
 ## Builder
 ####################################################################################################
-FROM rust:1.55 AS builder
+FROM rust:1.72 AS builder
 
-RUN rustup target add x86_64-unknown-linux-musl
+ARG ARCH=x86_64
+
+RUN rustup target add ${ARCH}-unknown-linux-musl
 RUN apt update && apt install -y musl-tools musl-dev libssl-dev pkg-config curl g++
 RUN update-ca-certificates
 
@@ -26,7 +28,7 @@ WORKDIR /sentry_tunnel
 RUN touch src/lib.rs
 COPY ./Cargo.lock ./Cargo.lock
 COPY ./Cargo.toml ./Cargo.toml
-RUN cargo build --target x86_64-unknown-linux-musl --release
+RUN cargo build --target ${ARCH}-unknown-linux-musl --release
 
 # Dependency have been built, remove the empty app and copy real source
 RUN rm src/*.rs
@@ -35,7 +37,7 @@ RUN touch src/main.rs
 RUN touch src/lib.rs
 RUN rm -f ./target/release/deps/sentry_tunnel*
 RUN rm -f ./target/release/deps/libsentry_tunnel*
-RUN cargo build --target x86_64-unknown-linux-musl --release
+RUN cargo build --target ${ARCH}-unknown-linux-musl --release
 
 
 #===========================#
@@ -57,7 +59,7 @@ COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 WORKDIR /sentry_tunnel
 
 # Copy our build
-COPY --from=builder /sentry_tunnel/target/x86_64-unknown-linux-musl/release/sentry_tunnel ./
+COPY --from=builder /sentry_tunnel/target/${ARCH}-unknown-linux-musl/release/sentry_tunnel ./
 COPY --from=alpine /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 # Use an unprivileged user.
 USER sentry_tunnel:sentry_tunnel
